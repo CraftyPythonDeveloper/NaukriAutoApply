@@ -1,4 +1,7 @@
+import os
+
 from selenium import webdriver
+from selenium.common import ElementClickInterceptedException
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
@@ -28,7 +31,17 @@ class NaukriAutomation:
         try:
             chrome_options = Options()
             # Add any required Chrome options here
-            
+            profile_path = os.path.join(os.getcwd(), "chrome_profile")
+            chrome_options.add_argument(f"--user-data-dir={profile_path}")
+            chrome_options.add_argument("--profile-directory=Default")
+
+            # Disable password manager popups
+            chrome_options.add_experimental_option("prefs", {
+                "credentials_enable_service": False,
+                "profile.password_manager_enabled": False,
+                "profile.password_manager_leak_detection": False
+            })
+
             service = Service(ChromeDriverManager().install())
             self.driver = webdriver.Chrome(service=service, options=chrome_options)
             self.driver.maximize_window()
@@ -57,8 +70,8 @@ class NaukriAutomation:
                 # Wait for chat window
                 chat_window = self.wait_for_element(By.CLASS_NAME, "chatbot_Drawer.chatbot_right")
                 if not chat_window:
-                    logger.warning("Chat window not found")
-                    return False
+                    logger.warning("Chat window is gone")
+                    return True
 
                 # Get the latest question
                 questions = self.driver.find_elements(By.CLASS_NAME, "botItem.chatbot_ListItem")
@@ -73,15 +86,17 @@ class NaukriAutomation:
                 choices = []
                 
                 # Check for radio buttons
-                radio_container = self.driver.find_elements(By.CLASS_NAME, "ssrc__radio-btn-container")
+                radio_container = self.driver.find_elements(By.CLASS_NAME, "ssrc__label")
                 if radio_container:
                     choices = [elem.text for elem in radio_container]
                     
-                # Get answer
-                answer = get_answer(latest_question, choices)
+
                 
                 # Handle different answer input types
                 if radio_container:
+                    # Get answer
+                    answer = get_answer(latest_question, choices)
+
                     # Handle radio button selection
                     for radio in radio_container:
                         if radio.text.lower() == answer.lower():
@@ -89,7 +104,9 @@ class NaukriAutomation:
                             break
                 else:
                     # Check for chips
-                    chips = self.driver.find_elements(By.CLASS_NAME, "chips")
+                    chips = self.driver.find_elements(By.CLASS_NAME, "chatbot_Chip.chipInRow.chipItem")
+                    choices = [chip.text for chip in chips]
+                    answer = get_answer(latest_question, choices)
                     if chips:
                         for chip in chips:
                             if chip.text.lower() == answer.lower():
@@ -102,10 +119,14 @@ class NaukriAutomation:
                             text_input.send_keys(answer)
                 
                 # Click save button
-                save_button = self.wait_for_element(By.CLASS_NAME, "sendMsg")
-                if save_button:
-                    save_button.click()
-                
+                try:
+                    save_button = self.wait_for_element(By.CLASS_NAME, "sendMsg")
+                    if save_button:
+                        save_button.click()
+                except ElementClickInterceptedException:
+                    logger.warning("Save button click intercepted, retrying...")
+                    continue
+
                 random_delay(2, 4)  # Wait between questions
                 
         except Exception as e:
