@@ -2,5 +2,5 @@ selenium
 pandas
 openpyxl
 webdriver-manager
- python-dotenv
- google-generativeai
+python-dotenv
+google-generativeai

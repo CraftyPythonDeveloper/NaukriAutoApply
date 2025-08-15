@@ -65,9 +65,12 @@ if not exist resume_data.txt (
     exit /b 1
 )
 
+:: Set PYTHONPATH to include src directory
+set PYTHONPATH=%CD%\src;%PYTHONPATH%
+
 :: Run the automation script
 echo Starting Naukri Automation...
-python naukri_automation.py
+python src/main.py
 if errorlevel 1 (
     echo An error occurred while running the script.
     pause
