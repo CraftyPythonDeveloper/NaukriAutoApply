@@ -8,7 +8,7 @@ logger = setup_logger()
 
 def validate_and_load_resume():
     """Validate resume file exists and load its content"""
-    resume_path = Path("resume_data.txt")
+    resume_path = Path("../resume_data.txt")
     if not resume_path.exists():
         error_msg = "resume_data.txt not found in root directory. Please add your resume data."
         logger.error(error_msg)

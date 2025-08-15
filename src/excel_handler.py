@@ -1,11 +1,15 @@
+from pathlib import Path
 import pandas as pd
 import os
 from logger_config import setup_logger
 
+
+EXCEL_FILEPATH = Path(__file__).parents[1] / "naukri_jobs.xlsx"
+
 logger = setup_logger()
 
 class ExcelHandler:
-    def __init__(self, file_path="naukri_jobs.xlsx"):
+    def __init__(self, file_path=EXCEL_FILEPATH):
         self.file_path = file_path
         self.validate_file()
         self.df = None

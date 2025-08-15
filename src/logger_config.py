@@ -8,12 +8,12 @@ def setup_logger():
     logger.setLevel(logging.DEBUG)
     
     # Create logs directory if it doesn't exist
-    if not os.path.exists('logs'):
-        os.makedirs('logs')
+    if not os.path.exists('../logs'):
+        os.makedirs('../logs')
     
     # Rotating file handler (3MB max size)
     file_handler = RotatingFileHandler(
-        'logs/naukri_automation.log',
+        '../logs/naukri_automation.log',
         maxBytes=3 * 1024 * 1024,  # 3MB
         backupCount=5
     )

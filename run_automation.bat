@@ -44,7 +44,7 @@ if exist .venv (
     )
     
     echo Installing dependencies...
-    python -m pip install -r requirements.txt
+    python -m pip install .
     if errorlevel 1 (
         echo Failed to install dependencies.
         pause
@@ -67,7 +67,7 @@ if not exist resume_data.txt (
 
 :: Run the automation script
 echo Starting Naukri Automation...
-python naukri_automation.py
+python src/naukri_automation.py
 if errorlevel 1 (
     echo An error occurred while running the script.
     pause

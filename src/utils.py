@@ -1,5 +1,7 @@
 import random
 import time
+from pathlib import Path
+
 from gemini_helper import setup_gemini, validate_and_load_resume, create_prompt, clean_answer
 from logger_config import setup_logger
 
