@@ -20,6 +20,7 @@ from utils import random_delay, wait_for_user_login, get_answer
 logger = setup_logger()
 add_console_handler(logger)
 
+
 class NaukriAutomation:
     def __init__(self):
         self.driver = None
@@ -105,6 +106,10 @@ class NaukriAutomation:
                 else:
                     # Check for chips
                     chips = self.driver.find_elements(By.CLASS_NAME, "chatbot_Chip.chipInRow.chipItem")
+
+                    if not chips:
+                        chips = self.driver.find_elements(By.XPATH, "//div[@class='multicheckboxes-container']/label")
+
                     choices = [chip.text for chip in chips]
                     answer = get_answer(latest_question, choices)
                     if chips:
@@ -146,11 +151,18 @@ class NaukriAutomation:
             
             if company_site_button and company_site_button.text == "Apply on company site":
                 logger.info("Job requires application on company site, skipping...")
-                return "company site"
+                return "company site", "Application needs to be done on company website"
                 
             if not apply_button:
-                logger.warning("Apply button not found")
-                return "failed"
+                apply_button = self.wait_for_element(By.ID, "already-applied")
+                if not apply_button:
+                    logger.warning("Apply button not found")
+                    return "failed", "Apply button not found on the page"
+                
+            # Check if job is already applied
+            if apply_button.text.strip().lower() == "applied":
+                logger.info("Job was already applied previously")
+                return "applied", "Already applied to this job"
                 
             # Click apply button
             apply_button.click()
@@ -159,14 +171,15 @@ class NaukriAutomation:
             # Handle chat questions
             if self.handle_chat_questions():
                 logger.info("Successfully completed application")
-                return "applied"
+                return "applied", "Application completed successfully"
             else:
                 logger.warning("Failed to complete application process")
-                return "failed"
+                return "failed", "Failed to complete chat questionnaire"
                 
         except Exception as e:
-            logger.error(f"Error processing job {url}: {str(e)}")
-            return "failed"
+            error_msg = str(e)
+            logger.error(f"Error processing job {url}: {error_msg}")
+            return "failed", f"Error: {error_msg}"
             
     def run(self):
         """Main automation loop"""
@@ -185,12 +198,14 @@ class NaukriAutomation:
             for index, row in jobs_df.iterrows():
                 if pd.isna(row['status']) or row['status'] == '':
                     try:
-                        status = self.process_job(row['url'])
-                        self.excel_handler.update_job_status(row['url'], status)
+                        status, message = self.process_job(row['url'])
+                        self.excel_handler.update_job_status(row['url'], status, message)
                         random_delay(3, 5)  # Wait between jobs
                     except Exception as e:
-                        logger.error(f"Error processing job {row['url']}: {str(e)}")
+                        error_msg = str(e)
+                        logger.error(f"Error processing job {row['url']}: {error_msg}")
                         traceback.print_exc()
+                        self.excel_handler.update_job_status(row['url'], "failed", f"Unexpected error: {error_msg}")
                         continue
                         
         except KeyboardInterrupt:

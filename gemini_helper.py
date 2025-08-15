@@ -45,6 +45,7 @@ def setup_gemini():
 def create_prompt(question, resume_content, choices=None):
     """Create an effective prompt for Gemini"""
     base_prompt = f"""Based on the following resume content, answer the question EXACTLY and CONCISELY without any explanations.
+    if you have choices, then answer must be one of the choices. If asked to upload a resume, the choice must be i'll do it later.
     
 Resume Content:
 {resume_content}
