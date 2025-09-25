@@ -13,8 +13,10 @@ dependencies = [
     "google-generativeai>=0.8.5",
     "openpyxl>=3.1.5",
     "pandas>=2.3.1",
+    "pyodbc>=5.2.0",
     "python-dotenv>=1.1.1",
     "selenium>=4.35.0",
+    "sqlalchemy>=2.0.43",
     "webdriver-manager>=4.0.2",
 ]
 
