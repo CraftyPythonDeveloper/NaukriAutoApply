@@ -1,5 +1,6 @@
 import os
 
+from pandas import read_excel
 from selenium import webdriver
 from selenium.common import ElementClickInterceptedException
 from selenium.webdriver.chrome.service import Service
@@ -13,8 +14,8 @@ import traceback
 
 import pandas as pd
 from logger_config import setup_logger, add_console_handler
-from excel_handler import ExcelHandler
 from utils import random_delay, wait_for_user_login, get_answer
+from db_utils import read_jobs, update_job_status
 
 # Setup logging
 logger = setup_logger()
@@ -192,20 +193,24 @@ class NaukriAutomation:
             logger.info("User logged in successfully")
             
             # Load jobs from Excel
-            jobs_df = self.excel_handler.load_jobs()
+            jobs_df = read_jobs()
+
+            if jobs_df.empty:
+                logger.info("No jobs found in the Excel file")
+                return
             
             # Process each job
             for index, row in jobs_df.iterrows():
                 if pd.isna(row['status']) or row['status'] == '':
                     try:
                         status, message = self.process_job(row['url'])
-                        self.excel_handler.update_job_status(row['url'], status, message)
+                        update_job_status(row['url'], status, message)
                         random_delay(3, 5)  # Wait between jobs
                     except Exception as e:
                         error_msg = str(e)
                         logger.error(f"Error processing job {row['url']}: {error_msg}")
                         traceback.print_exc()
-                        self.excel_handler.update_job_status(row['url'], "failed", f"Unexpected error: {error_msg}")
+                        update_job_status(row['url'], "failed", f"Unexpected error: {error_msg}")
                         continue
                         
         except KeyboardInterrupt:
